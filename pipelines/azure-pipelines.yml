@@ -80,27 +80,18 @@ stages:
           - script: |
               set -e
 
-              echo "Updating Helm values file: $(helmValuesFile)"
-              echo "New image tag: $(imageTag)"
+              echo "Current image section before update:"
+              grep -A 5 "image:" $(helmValuesFile)
 
-              python3 - <<'PY'
-              from pathlib import Path
-              import re
+              echo "Updating image tag to $(imageTag)"
 
-              file_path = Path("$(helmValuesFile)")
-              text = file_path.read_text()
+              sed -i "s/^[[:space:]]*tag:.*/  tag: $(imageTag)/" $(helmValuesFile)
 
-              updated = re.sub(
-                  r"(image:\n\s+repository:.*\n\s+tag:\s*).*",
-                  r"\g<1>$(imageTag)",
-                  text
-              )
+              echo "Image section after update:"
+              grep -A 5 "image:" $(helmValuesFile)
 
-              file_path.write_text(updated)
-              PY
-
-              echo "Updated image section:"
-              grep -A 3 "image:" $(helmValuesFile)
+              echo "Git diff:"
+              git diff $(helmValuesFile)
 
               git config user.email "azure-pipeline@local"
               git config user.name "azure-pipeline"
@@ -108,9 +99,9 @@ stages:
               git add $(helmValuesFile)
 
               if git diff --cached --quiet; then
-                echo "No Helm image tag changes to commit"
+                echo "No changes detected in values.yaml"
               else
-                git commit -m "Update tracking-service image tag to $(imageTag) [skip ci]"
+                git commit -m "Update image tag to $(imageTag) [skip ci]"
                 git push origin HEAD:main
               fi
-            displayName: Commit updated Helm image tag
+            displayName: Update Helm values and push
