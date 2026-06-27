@@ -80,6 +80,9 @@ def tracking(tracking_id):
         "service": APP_NAME
     })
 
+@app.route("/hello")
+def metrics():
+    return "hello"
 
 @app.route("/metrics")
 def metrics():
