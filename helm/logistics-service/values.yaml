@@ -50,3 +50,9 @@ ingress:
   host: logistics.local
   path: /
   pathType: Prefix
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
