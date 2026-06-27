@@ -1,0 +1,45 @@
+# Default values for logistics-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 3
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: logisticsacr3507.azurecr.io/tracking-service
+  # This sets the pull policy for images.
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v1"
+
+app:
+  name: tracking-service
+  version: v1
+  environment: dev
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+
+container:
+  port: 5000
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "300m"
+    memory: "256Mi"
+
+readinessProbe:
+  path: /ready
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+livenessProbe:
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 15

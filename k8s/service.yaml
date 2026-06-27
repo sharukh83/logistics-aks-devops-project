@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tracking-service
+  namespace: logistics
+spec:
+  type: ClusterIP
+  selector:
+    app: tracking-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5000
