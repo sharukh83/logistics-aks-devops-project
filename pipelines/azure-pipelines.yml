@@ -6,6 +6,8 @@ trigger:
     include:
       - app/*
       - pipelines/*
+    exclude:
+      - helm/*
 
 pool:
   vmImage: ubuntu-latest
@@ -15,13 +17,14 @@ variables:
   acrLoginServer: 'logisticsacr3507.azurecr.io'
   imageName: 'tracking-service'
   imageTag: '$(Build.BuildId)'
+  helmValuesFile: 'helm/logistics-service/values.yaml'
 
 stages:
-  - stage: BuildAndPush
-    displayName: Build and Push Docker Image
+  - stage: BuildScanPush
+    displayName: Build, Scan and Push Docker Image
     jobs:
-      - job: BuildAndPushJob
-        displayName: Build and Push Image to ACR
+      - job: BuildScanPushJob
+        displayName: Build, Scan and Push Image to ACR
         steps:
           - checkout: self
 
@@ -44,12 +47,70 @@ stages:
               echo "Building Docker image"
               docker build -t $IMAGE -f app/Dockerfile app
 
+              echo "Running Trivy image scan"
+              docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                aquasec/trivy:latest image \
+                --severity HIGH,CRITICAL \
+                --ignore-unfixed \
+                --exit-code 0 \
+                $IMAGE
+
               echo "Pushing Docker image to ACR"
               docker push $IMAGE
 
               echo "Image pushed successfully: $IMAGE"
-            displayName: Build and Push Docker Image
+            displayName: Build, scan and push Docker image
             env:
               AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
               AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
               AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+
+  - stage: UpdateGitOps
+    displayName: Update Helm Image Tag
+    dependsOn: BuildScanPush
+    condition: succeeded()
+    jobs:
+      - job: UpdateHelmValues
+        displayName: Update values.yaml and push to Git
+        steps:
+          - checkout: self
+            persistCredentials: true
+
+          - script: |
+              set -e
+
+              echo "Updating Helm values file: $(helmValuesFile)"
+              echo "New image tag: $(imageTag)"
+
+              python3 - <<'PY'
+              from pathlib import Path
+              import re
+
+              file_path = Path("$(helmValuesFile)")
+              text = file_path.read_text()
+
+              updated = re.sub(
+                  r"(image:\n\s+repository:.*\n\s+tag:\s*).*",
+                  r"\g<1>$(imageTag)",
+                  text
+              )
+
+              file_path.write_text(updated)
+              PY
+
+              echo "Updated image section:"
+              grep -A 3 "image:" $(helmValuesFile)
+
+              git config user.email "azure-pipeline@local"
+              git config user.name "azure-pipeline"
+
+              git add $(helmValuesFile)
+
+              if git diff --cached --quiet; then
+                echo "No Helm image tag changes to commit"
+              else
+                git commit -m "Update tracking-service image tag to $(imageTag) [skip ci]"
+                git push origin HEAD:main
+              fi
+            displayName: Commit updated Helm image tag
