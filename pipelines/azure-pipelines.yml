@@ -40,10 +40,10 @@ stages:
             docker build -t $ACR/tracking-service:$TAG -f app/Dockerfile app
 
             echo "Building billing-service"
-            docker build -t $ACR/billing-service:$TAG -f app-billing/Dockerfile app-billing
+            docker build -t $ACR/billing-service:$TAG -f app-billing/Dockerfile app/app-billing
 
             echo "Building notification-service"
-            docker build -t $ACR/notification-service:$TAG -f app-notification/Dockerfile app-notification
+            docker build -t $ACR/notification-service:$TAG -f app-notification/Dockerfile app/app-notification
 
             echo "Running Trivy scan"
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 0 $ACR/tracking-service:$TAG
