@@ -11,7 +11,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 19
+  tag: 18
 
 app:
   name: tracking-service
@@ -47,10 +47,20 @@ livenessProbe:
 ingress:
   enabled: true
   className: nginx
+  host: logistics.yourdomain.com          # ADD — required for host-based routing
 
   services:
     - name: tracking-service
       path: /tracking
+      port: 80                            # tracking-service Service port (maps to 5000)
+
+    - name: billing-service
+      path: /billing
+      port: 80                            # set to whatever billing-service Service port is
+
+    - name: notification-service
+      path: /notify
+      port: 80                            # set to whatever notification-service Service port is
 
 
 autoscaling:
