@@ -4,6 +4,8 @@ kind: Ingress
 metadata:
   name: logistics-ingress
   namespace: logistics
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
