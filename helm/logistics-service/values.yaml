@@ -47,9 +47,16 @@ livenessProbe:
 ingress:
   enabled: true
   className: nginx
-  host: logistics.local
-  path: /
-  pathType: Prefix
+
+  services:
+    - name: tracking-service
+      path: /tracking
+
+    - name: billing-service
+      path: /billing
+
+    - name: notification-service
+      path: /notify
 
 autoscaling:
   enabled: true
