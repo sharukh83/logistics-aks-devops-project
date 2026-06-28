@@ -2,22 +2,17 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: logistics-ingress
-  namespace: logistics
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  name: {{ .Release.Name }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
     - http:
         paths:
-{{- range .Values.ingress.services }}
-          - path: {{ .path }}
-            pathType: Prefix
+          - path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
-                name: {{ .name }}
+                name: {{ .Release.Name }}
                 port:
-                  number: 80
-{{- end }}
+                  number: {{ .Values.service.port }}
 {{- end }}
