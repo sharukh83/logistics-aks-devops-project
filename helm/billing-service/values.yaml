@@ -24,23 +24,7 @@ service:
 container:
   port: 5000
 
-resources:
-  requests:
-    cpu: "100m"
-    memory: "128Mi"
-  limits:
-    cpu: "300m"
-    memory: "256Mi"
 
-readinessProbe:
-  path: /ready
-  initialDelaySeconds: 5
-  periodSeconds: 10
-
-livenessProbe:
-  path: /health
-  initialDelaySeconds: 10
-  periodSeconds: 15
 
 ingress:
   enabled: true
