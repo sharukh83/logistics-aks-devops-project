@@ -14,6 +14,13 @@ spec:
       labels:
         app: {{ include "tracking-service.name" . }}
     spec:
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "azure-keyvault-secrets"
       containers:
         - name: {{ include "tracking-service.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -46,3 +53,7 @@ spec:
             limits:
               cpu: {{ .Values.resources.limits.cpu | quote }}
               memory: {{ .Values.resources.limits.memory | quote }}
+          volumeMounts:
+          - name: secrets-store
+            mountPath: "/mnt/secrets"
+            readOnly: true
