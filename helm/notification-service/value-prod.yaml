@@ -1,0 +1,15 @@
+replicaCount: 3
+
+app:
+  environment: prod
+
+image:
+  tag: v1
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
