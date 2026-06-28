@@ -52,11 +52,6 @@ ingress:
     - name: tracking-service
       path: /tracking
 
-    - name: billing-service
-      path: /billing
-
-    - name: notification-service
-      path: /notify
 
 autoscaling:
   enabled: true
