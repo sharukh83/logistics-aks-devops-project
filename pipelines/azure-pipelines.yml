@@ -13,6 +13,9 @@ variables:
 
 stages:
 
+# ===============================
+# BUILD + PUSH IMAGES
+# ===============================
 - stage: BuildScanPush
   displayName: Build, Scan and Push Images
   jobs:
@@ -36,30 +39,42 @@ stages:
             TAG=$(Build.BuildId)
             ACR=$(acrLoginServer)
 
+            echo "================================="
             echo "Building tracking-service"
             docker build -t $ACR/tracking-service:$TAG -f app/Dockerfile app
 
+            echo "================================="
             echo "Building billing-service"
-            docker build -t $ACR/billing-service:$TAG -f app-billing/Dockerfile app/app-billing
+            docker build -t $ACR/billing-service:$TAG -f app/app-billing/Dockerfile app/app-billing
 
+            echo "================================="
             echo "Building notification-service"
-            docker build -t $ACR/notification-service:$TAG -f app-notification/Dockerfile app/app-notification
+            docker build -t $ACR/notification-service:$TAG -f app/app-notification/Dockerfile app/app-notification
 
+            echo "================================="
             echo "Running Trivy scan"
+
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 0 $ACR/tracking-service:$TAG
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 0 $ACR/billing-service:$TAG
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 0 $ACR/notification-service:$TAG
 
+            echo "================================="
             echo "Pushing images"
+
             docker push $ACR/tracking-service:$TAG
             docker push $ACR/billing-service:$TAG
             docker push $ACR/notification-service:$TAG
+
+            echo "All images pushed successfully"
 
           env:
             AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
             AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
             AZURE_TENANT_ID: $(AZURE_TENANT_ID)
 
+# ===============================
+# UPDATE HELM VALUES
+# ===============================
 - stage: UpdateGitOps
   displayName: Update Helm Values
   dependsOn: BuildScanPush
@@ -74,14 +89,26 @@ stages:
             set -e
             TAG=$(Build.BuildId)
 
+            echo "Updating tracking-service"
             sed -i "s/tag:.*/tag: $TAG/" helm/logistics-service/values.yaml
+
+            echo "Updating billing-service"
             sed -i "s/tag:.*/tag: $TAG/" helm/billing-service/values.yaml
+
+            echo "Updating notification-service"
             sed -i "s/tag:.*/tag: $TAG/" helm/notification-service/values.yaml
+
+            echo "Git diff:"
+            git diff
 
             git config user.email "azure-pipeline@local"
             git config user.name "azure-pipeline"
 
             git add helm/
 
-            git commit -m "Update all services to $TAG [skip ci]" || echo "No changes"
-            git push origin HEAD:main
+            if git diff --cached --quiet; then
+              echo "No changes"
+            else
+              git commit -m "Update all services image tag to $TAG [skip ci]"
+              git push origin HEAD:main
+            fi
