@@ -26,12 +26,6 @@ container:
 
 
 
-ingress:
-  enabled: true
-  className: nginx
-  host: logistics.local
-  path: /
-  pathType: Prefix
 
 autoscaling:
   enabled: true

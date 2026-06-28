@@ -1,5 +1,5 @@
 {{- define "billing-service.name" -}}
-tracking-service
+billing-service
 {{- end }}
 
 {{- define "billing-service.fullname" -}}
