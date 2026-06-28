@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: logistics-appset
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: tracking-service
+            path: helm/logistics-service
+          - name: billing-service
+            path: helm/billing-service
+          - name: notification-service
+            path: helm/notification-service
+
+  template:
+    metadata:
+      name: '{{name}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/sharukh83/logistics-aks-devops-project.git
+        path: '{{path}}'
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: logistics
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
