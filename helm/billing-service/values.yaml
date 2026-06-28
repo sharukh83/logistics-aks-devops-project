@@ -9,7 +9,7 @@ replicaCount: 1
 image:
   image:
   repository: logisticsacr3507.azurecr.io/billing-service
-  tag: 13
+  tag: 14
 
 app:
   name: billing-service
